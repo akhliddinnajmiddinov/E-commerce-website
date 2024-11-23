@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+	<div class="m-5">
+		<h1 class="text-2xl font-medium my-4">My account</h1>
+		<form method="post" action="{% url 'logout' %}">
+			{% csrf_token %}
+			<button type="submit" class="bg-black px-4 py-3 rounded-lg text-white font-medium my-2">Log out</button>
+		</form>
+	</div>
+
+	<hr class="bg-black h-1 my-4">
+
+	<div class="m-5">
+		<h1 class="text-2xl font-medium my-2">Account informations</h1>
+
+		<p><strong>Name: </strong>{{ request.user.get_full_name }}</p>
+		<p><strong>Email: </strong>{{ request.user.email }}</p>
+	</div>
+
+	<hr class="bg-black h-1 my-4">
+
+	<div class="m-5">
+		<h1 class="text-2xl font-medium my-2">Orders</h1>
+
+		{% for order in request.user.orders.all %}
+			<article class="bg-slate-200 border rounded-lg border border-collapse my-4">
+				<div class="w-full bg-slate-300 py-2 px-4 border rounded-lg flex items-center justify-between">
+					<p><strong>Created at: </strong>{{ order.created_at }}</p>
+					<p><strong>Status: </strong>{{ order.status }}</p>
+
+				</div>
+				<div class="w-full">
+					<table class="w-full">
+						<thead>
+							<tr>
+								<th class="text-left border border-slate-600">Title</th>
+								<th class="text-left border border-slate-600">Quantity</th>
+								<th class="text-left border border-slate-600">Price</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for orderitem in order.items.all %}
+								<tr>
+									<td class="border border-slate-700">{{ orderitem.product.title }}</td>
+									<td class="border border-slate-700">{{ orderitem.quantity }}</td>
+									<td class="border border-slate-700">{{ orderitem.price }}</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+						<tfoot>
+							<tr>
+								<td class="border border-slate-700">Total:</td>
+								<td class="border border-slate-700">{{ order.get_total_quantity }}</td>
+								<td class="border border-slate-700">{{ order.paid_amount }}</td>
+							</tr>
+						</tfoot>
+					</table>
+				</div>
+			</article>
+		{% empty %}
+			<p>You don't have any order yet...</p>
+		{% endfor %}
+	</div>
+
+{% endblock %}

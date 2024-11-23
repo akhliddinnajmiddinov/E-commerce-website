@@ -1,0 +1,64 @@
+<div class="w-full p-2 py-4 bg-slate-200" id="newsletters_app">
+	<div class="flex flex-col items-center justify-center text-xl">
+		<h1 class="mb-2">Join our newsletters!</h1>
+		<div>
+			<input type="text" name="email" id="id_email" class="h-12 p-2 my-2 border-2 border-slate-300 focus:border-slate-600 outline-none" v-model="email">
+			<button class="bg-green-400 hover:bg-green-500 py-2 px-4 h-12" @click="add_to_newsletter()">Join</button>
+		</div>
+		<div class="bg-green-300 p-4" v-if="show_success">
+	        <p class="font-semibold">You successfully registered to newsletters!</p>
+	    </div>
+
+	    <div class="bg-amber-200 p-4" v-if="show_error">
+	        <p class="font-semibold">This email is already connected to newsletters!</p>
+	    </div>
+	</div>
+</div>
+
+
+<script>
+	
+	var app = Vue.createApp({
+		data() {
+			return {
+				email: "",
+				show_error: false,
+				show_success: false,
+			}
+		},
+		methods: {
+			add_to_newsletter(){
+				var data = {"email": this.email};
+
+				fetch("/api/add_subscriber/", {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"X-CSRFToken": "{{ csrf_token }}"
+					},
+					credentials: "same-origin",
+					body: JSON.stringify(data),
+				})
+				.then((response) => response.json())
+				.then((data) => {
+					console.log(data);
+					if("error" in data){
+						this.show_error = true;
+						this.show_success = false;
+
+					}
+					else {
+						this.show_error = false;
+						this.show_success = true;
+					}
+				})
+				.catch((error) => {
+					console.log(error);
+				});
+			}
+		}	
+	});
+
+	app.mount("#newsletters_app");
+
+</script>

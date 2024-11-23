@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<div class="w-full flex flex-row items-center justify-center my-16">
+		<div class="w-1/4">
+			<h1 class="my-4 text-3xl font-medium">Log in</h1>
+			<form class="mb-4" method="post" action="{% url 'login' %}">
+				{% csrf_token %}
+
+				<div class="field">
+					<label for="username">Username:</label><br>
+					<input type="text" name="username" id="id_username" class="w-full p-2 my-2 border-2 border-slate-300 focus:border-slate-600 outline-none" required>
+				</div>
+
+				<div class="field">
+					<label for="password">Password:</label><br>
+					<input type="text" name="password" id="id_password" class="w-full p-2 my-2 border-2 border-slate-300 focus:border-slate-600 outline-none" required>
+				</div>
+
+				{% if form.errors %}
+					<div class="w-full p-2 px-4 my-2 bg-amber-200  rounded-lg text-center">Your login or password is incorrect!</div>
+				{% endif %}
+
+				<button type="submit" class="bg-black px-4 py-3 rounded-lg text-white font-medium my-2">Log in</button>
+			</form>
+			<p class="w-full text-center my-2">If you don't have an account, <a href="{% url 'signup' %}">Sign up</a></p>
+			
+
+		</div>
+	</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %}{% endblock %}E-commerce</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/primeicons/3.0.0/primeicons.css" integrity="sha512-Rxb6R6A7p1fiHvhjB7B417xsqg/D7eummpTlNpIVo2qgLbHNlMwdi1Ig180Ddp0ssWSJI/8Z8AHcWWlqw+cS9A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="{% static 'main.css' %}">
+        
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <script src="https://unpkg.com/vuex@4.1.0/dist/vuex.global.js"></script>
+<body>
+
+    <nav class="flex flex-col md:flex-row items-center justify-between flex-wrap md:bg-black" id='navbarapp' data-cartlength="{{ cart.get_total_length }}" data-totalprice="{{ cart.get_total_price }}">
+        <div class="w-full md:w-min text-nowrap flex items-center justify-between bg-black  p-6">
+            <a href="{% url 'core:frontpage' %}" class="text-2xl text-white">E-Commerce</a>
+            
+            <div>
+                <form method="get" action="{% url 'store:search' %}">
+                    <input class="border rounded-md ml-4 mr-2 h-8 p-2" type="text" name="query" placeholder="Search..." value="{{ query }}" required>
+                    <button type="submit" class="text-white text-xl"><i class="pi pi-search"></i></button>
+                </form>
+            </div>
+
+            <a @click="toggleMenu()" role="button" id="burger" class="text-white text-xl sm:inline md:hidden">
+                <i class="pi pi-bars"></i>
+            </a>
+        </div>
+
+        <div class="flex flex-row items-center justify-center text-black md:bg-black md:text-white m-0">
+            <div id = "main-navbar" class="flex flex-col items-center justify-center gap-4 md:flex md:flex-row" :class="{'hidden': menuClass}">
+                {% for category in menu_categories %}
+                    <div>
+                       <a class="text-lg transition-all duration-200 hover:text-xl" href="{% url 'store:category_detail' category.slug %}">{{ category.title }}</a>
+                    </div>
+                {% endfor %}
+                <div>
+                    <a class="text-lg transition-all duration-200 hover:text-xl" href="{% url 'core:contact' %}">Contact</a>
+                </div>
+                <div>
+                    <a class="text-3xl transition-all duration-200 hover:text-4xl" href="{% url 'cart:cart' %}"><i class="pi pi-shopping-cart"></i>([[ numItems ]])</a>
+                </div>
+                {% if request.user.is_authenticated %}
+                    <div class="mr-4">
+                        <a class="text-3xl transition-all duration-200 hover:text-4xl" href="{% url 'myaccount:myaccount' %}"><i class="pi pi-user"></i></a>
+                    </div>
+                {% else %}
+                    <div class="mr-4">
+                        <a class="text-lg transition-all duration-200 hover:text-xl" href="{% url 'login' %}">Log in</a>
+                    </div>
+                {% endif %}
+                
+            </div>
+        </div>
+
+    </nav>
+
+    {% block content %}
+    {% endblock content %}
+
+    {% include 'parts/newsletter.html' %}
+
+    <footer class="w-full bg-black text-white p-4">
+        <div class="flex flex-row items-start justify-between flex-wrap">
+            <div class="flex-1 min-w-min">
+                E-commerce
+            </div>
+            <div class="flex-1 min-w-min">
+                <a href="{% url 'core:contact' %}" class="block my-2">Contact</a>
+                <a href="{% url 'core:about' %}" class="block my-2">About</a>
+            </div>
+        </div>
+    </footer>
+
+    {% comment %} <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script> {% endcomment %}
+
+    <script>
+        var store = new Vuex.Store({
+            state: {
+                numItems: parseInt(document.getElementById("navbarapp").dataset.cartlength),
+                totalPrice: parseFloat(document.getElementById("navbarapp").dataset.totalprice) 
+            },
+            mutations: {
+                increment(state, quantity){
+                    state.numItems += quantity;
+                },
+                changeTotalPrice(state, price){
+                    state.totalPrice += price;
+                }
+            }
+        })
+
+        var navbarapp = Vue.createApp({
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    menuClass: true
+                }
+            },
+            store: store,
+            computed: {
+                numItems: function() {
+                    return store.state.numItems;
+                }
+            },
+            methods: {
+                toggleMenu() {
+                    this.menuClass = !this.menuClass;
+                    console.log(this.menuClass);
+                }
+            }
+        });
+
+        navbarapp.mount("#navbarapp");
+    </script>
+    {% block script %}
+    {% endblock %}
+</body>
+</html>

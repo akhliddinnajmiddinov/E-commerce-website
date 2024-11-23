@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="productapp" data-allimages='{{ allImages }}' data-incart='{{ inCart }}'>
+    <div class="w-full flex flex-col items-start justify-center  min-w-48 rounded m-5">
+        <figure class="w-96 h-auto mb-3">
+            <img :src="mainImage"></td>
+        </figure>
+        <div class="flex items-center justify-center">
+            <figure class="w-16 h-auto mr-4" v-if="allImages.length > 1" v-for="image in allImages">
+                <img :src="image.thumbnail" @click="changeImageTo(image.image)"></td>
+            </figure>
+        </div>
+        <div class="font-bold text-xl mb-2">
+            {{ product.title }}
+        </div>
+        <p class="text-base mb-2">
+            ${{ product.price }}
+        </p>
+        <p class="text-base text-xl">
+            {{ product.description }}
+        </p>
+        <h3 class="text-2xl mt-4" v-if="inCart">This product is already in the cart!</h3>
+        <button v-else-if="num_available > 0" class="bg-blue-500 text-white hover:bg-blue-700 m-2 p-3 rounded-md" @click="addToCart({{ product.pk }})">Add to cart</button>
+        <div class="text-4xl" v-else>
+            <h1>This product is out of stock!</h1>
+        </div>
+    </div>
+    <div class="bg-green-500 p-4" v-if="showMessage">
+        <p class="font-semibold">The product added to the cart!</p>
+    </div>
+
+    {% if product.variants.all %}
+        <hr class="bg-black h-1 my-4">
+
+        <div class="m-5">
+            <h1 class="text-2xl font-bold my-2">Variants</h1>
+            <table class="w-full">
+                <thead>
+                    <tr>
+                        <th class="text-left border border-slate-600 p-2"></th>
+                        <th class="text-left border border-slate-600 p-2">Name:</th>
+                        <th class="text-left border border-slate-600 p-2"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for variant in product.variants.all %}
+                        <tr>
+                            <td class="border border-slate-600 p-2">
+                                <figure class="w-16 h-16">
+                                    <img src="{{ variant.thumbnail.url }}">
+                                </figure>
+                            </td>
+                            <td class="border border-slate-600 p-2">
+                                    {{ variant.title }}
+                            </td>
+                            <td class="border border-slate-600 p-2">
+                                <button class="bg-blue-500 text-white hover:bg-blue-700 m-2 p-3 rounded-md" @click="addToCart({{ variant.pk }})">Add to cart</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block script %}
+
+<script>
+    
+    var productapp = Vue.createApp({
+        delimiters: ['[[', ']]'],
+        data() {
+            return {
+                showMessage: false,
+                mainImage: '{{ product.image.url }}',
+                allImages: [],
+                inCart: false,
+                num_available: {{ product.num_available }}
+            }
+        },
+        mounted() {
+            const appElement = document.getElementById('productapp');
+            console.log(appElement.dataset.allimages);
+            this.allImages.push(...JSON.parse(appElement.dataset.allimages));
+            console.log(appElement.dataset.incart);
+            this.inCart = JSON.parse(appElement.dataset.incart)['inCart'];
+            console.log(this.num_available);
+            console.log("Mounted");
+        },
+        store: store,                            
+        methods: {
+            addToCart(product_id) {
+                console.log("Added " + product_id);
+
+                var data = {'product_id': product_id, 'quantity': 1, 'update': false};
+
+                fetch('/api/add_to_cart/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(data),
+                })
+                .then((response) => {
+                    console.log(response);
+                    this.showMessage = true;
+                    store.commit("increment", 1);
+
+                    setTimeout(() => {
+                        this.showMessage = false;
+                    }, 2000);
+
+                    this.inCart = true;
+                })
+                .catch((error) => {
+                    console.log("error");
+                });
+
+            },
+            removeFromCart(product_id) {
+                
+                var data = {'product_id': product_id };
+                
+                fetch('/api/remove_from_cart/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(data),
+                })
+                .then((response) => {
+                    console.log(response);
+                })
+                .catch((error) => {
+                    console.log("error");
+                });
+                
+                var filteredProducts = [];
+                for(let i=0; i<this.products.length; i ++){
+                    if(this.products[i].id == product_id){
+                        store.commit('increment', -this.products[i].quantity);
+                        store.commit('changeTotalPrice', -this.products[i].total_price);
+                    }   
+                    else filteredProducts.push(this.products[i]);
+                }
+
+                this.products = filteredProducts;
+                
+                console.log("Removed " + product_id);
+
+            },
+            changeImageTo(imageUrl) {
+                this.mainImage = imageUrl;
+            }
+        }
+    });
+
+    productapp.mount('#productapp');
+</script>
+
+{% endblock %}
